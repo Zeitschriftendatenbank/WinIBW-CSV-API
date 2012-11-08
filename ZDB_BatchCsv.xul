@@ -1,0 +1,79 @@
+﻿<?xml version="1.0"?> <!-- -*- Mode: HTML -*- -->
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?> 
+<?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
+
+
+<dialog
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	title="CSV Config"
+	onload="loadFiles();"
+	buttons="accept, cancel"
+	style="min-width: 33em;height:100%;"
+	ondialogaccept="return csvOnAccept();"
+	ondialogcancel="return csvOnCancel();"
+	onunload="application.activate();"
+	id="ZDB_BatchCsv"
+>
+<script type="application/x-javascript" src="chrome://ibw/content/xul/ZDB_BatchCsv.js" />
+	<hbox>
+		<groupbox orient="horizontal">
+			<label value="Dateiauswahl:" />
+			<menulist id="idFileListMenu" oncommand="loadFileByName();">
+				<menupopup id="idFileList" />
+			</menulist>
+		</groupbox>	
+		<groupbox orient="horizontal">
+			<label value="Trennzeichen:" />
+				<textbox id="delimiter"
+					value=";"
+					multiline="false"
+					rows="1"
+					cols="1"
+					tooltiptext="Bitte geben Sie das CSV-Trennzeichen ein!"/>
+		</groupbox>
+		<groupbox orient="horizontal">
+			<label value="Startzeile:" />
+				<textbox id="sZeile"
+					value="2"
+					multiline="false"
+					rows="1"
+					cols="1"
+					tooltiptext="Bitte geben Sie die Zeile an, ab der die Daten gelesen werden sollen!"
+					onkeyup="loadFileByName();"/>
+		</groupbox>	
+	</hbox>
+	<hbox>
+		<groupbox orient="vertical" id="configbox">
+			<label id="firstChild" value="Ordnen Sie den Zeilen ihre Bedeutung zu:" />
+		</groupbox>
+		<groupbox orient="vertical" id="configbox2">
+			<label value="Tragen Sie das Produkt-ISIL ein:" />
+			<textbox id="isil"
+					value=""
+					multiline="false"
+					rows="1"
+					cols="1"
+					tooltiptext="Produkt-ISIL"/>		
+			<label value="Konstanten" />
+			<menulist id="produktmenu">
+				<menupopup id="produktcode">
+					<menuitem label="Bitte Auswahl treffen" value=""/>
+					<menuitem label="keine Angabe" value=""/>
+					<menuitem label="nl Nationallizenz" value="nl"/>
+					<menuitem label="ad Allianzlizenz mit DFG-Förderung" value="ad"/>
+					<menuitem label="al Allianzlizenz" value="al"/>
+					<menuitem label="nk Nationalkonsortium" value="nk"/>
+				</menupopup>
+			</menulist>
+
+			<label value="Freitext:" />
+			<textbox id="description"
+					value=""
+					multiline="true"
+					rows="10"
+					cols="1"
+					tooltiptext="Links müssen mit HTML erzeugt werden."/>
+		</groupbox>
+	</hbox>
+</dialog>
+

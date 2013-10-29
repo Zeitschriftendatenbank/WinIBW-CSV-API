@@ -123,7 +123,7 @@ Initiert den Aufruf des Konfigurations-Interface
 
 
 ### __csvBatch
-Initiert die Batchverarbeitung der CSV-Datei auf Grundlage der Konfiguration. Ruft Datensatz zur Verarbeitung anhand von 'searchindex' und 'id_key' auf.
+Initiiert die Batchverarbeitung der CSV-Datei auf Grundlage der Konfiguration. Ruft Datensatz zur Verarbeitung anhand von 'searchindex' und 'id_key' auf.
 
 #### Stellt folgende Eigenschaften bereit:
 
@@ -131,7 +131,10 @@ Initiert die Batchverarbeitung der CSV-Datei auf Grundlage der Konfiguration. Ru
 *    _String_ eigene_bibliothek		: IDN/PPN des Bibliothekssatzes (wenn Eigenschaft 'withbib = true')
 
 ### __csvBatchImport
-Initiert die Batchverarbeitung der CSV-Datei auf Grundlage der Konfiguration. Im Gegensatz zu __csvBatch ruft __csvBatchImport nicht einzelne Datensätze zur Bearbeitung auf, sondern stellt nur die Werte einzelner CSV-Zeilen breit. Sinnvoll für direkten Import von Daten. 
+Initiiert die Batchverarbeitung der CSV-Datei auf Grundlage der Konfiguration. Im Gegensatz zu \__csvBatch ruft __csvBatchImport nicht einzelne Datensätze zur Bearbeitung auf, sondern stellt nur die Werte einzelner CSV-Zeilen breit. Sinnvoll für direkten Import von Daten. 
+
+### __csvAPI
+Initiiert die Batchverarbeitung der CSV-Datei ohne vorherige Konfiguration. Funktioniert ähnlich wie \__csvBatchImport. Die keys, die mit der methode __csvSetProperties definiert werden, müssen mit den Spalten der CSV-Datei übereinstimmen. Siehe Beispiel
 
 #### Stellt folgende Eigenschaften bereit:
 
@@ -172,7 +175,9 @@ Dies sind Methoden, die zur internen Bearbeitung gebraucht werden.
 Müssen diese Methoden als Prototypen definiert sein?
 
 ## Benutzung
-Anhand eines Beispiels soll die Benutzung der Klasse veranschaulicht werden.
+
+Beispiel mit Konfigurationsmaske
+
 ```javascript
 // erstelle eine neue Function
 function csvBatchIstWertVorhanden()
@@ -199,6 +204,54 @@ function csvBatchIstWertVorhanden()
 	
 		// initiiere die Batchbearbeitung
 		csv.__csvBatch();
+	} 
+	catch(e)
+	{
+		csv.__csvError(e);
+	}
+	
+}
+```
+
+Beispiel ohne Konfigurationsmaske
+
+```javascript
+// erstelle eine neue Function
+function csvBatchIstWertVorhanden()
+{
+	// initiiere das CSV-Objekt
+	var csv = new CSV();
+	// diese csv muss im Unterverzeichnis 'csv' des Anwendungsprofils liegen.
+	csv.csvFilename = "test.csv";
+	// start ab Zeile
+	csv.startLine = 1;
+	// werte getrennt mit
+	csv.delimiter = ";";
+	// erweitere nun die Klasse CSV durch deine eigene Methode
+	csv.meineMethode = function()
+	{
+		// mach etwas mit dem Datensatz	
+		// greife auf csv werte zu
+		if(application.activeWindow.title.find(csv.line['Suchstring'],false,false,true))
+		{
+			return application.activeWindow.title.currentLineNumber;
+		}
+		else
+		{
+			return false;
+		{	
+	}
+	
+	// setze deine eigenen Eigenschaften
+	// der erste Parameter ist die Callback Funktion, die Du zuvor erstellt hast
+	csv.__csvSetProperties(csv.meineMethode,["","ZDB-ID","Suchstring"],'ZDB-ID','zdb',false,"ZDB_LOG.txt");
+	
+	// initiiere das Konfigurations-Interface
+	// fange dabei eventuelle Fehler ab
+	try
+	{
+		// initiiere die Batchbearbeitung
+		csv.__API();
 	} 
 	catch(e)
 	{

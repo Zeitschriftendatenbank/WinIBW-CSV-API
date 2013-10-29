@@ -9,7 +9,7 @@
 function CSV(){
 	
 	this.callback = function() {};
-	this.keys = ["","ZDB-ID","URL","Band Beginn","Jahr Beginn","Heft Beginn","Band Ende","Jahr Ende","Heft Ende","Suchstring"];
+	this.keys = ["","ZDB-ID","URL","Band Beginn","Jahr Beginn","Heft Beginn","Band Ende","Jahr Ende","Heft Ende","Moving Wall","Suchstring"];
 	this.id_key = "ZDB-ID";
 	this.searchindex = "zdb";
 	this.withbib = true;
@@ -19,7 +19,7 @@ function CSV(){
 	var scr = application.activeWindow.getVariable("scr");
 	
 	if ( (scr == "") || ("#7A#8A#FI#".indexOf(scr) < 0) ) {
-		throw("Sie mÃ¼ssen sich eingeloggt haben um mit diesem Skript arbeiten zu kÃ¶nnen.");
+		throw("Sie müssen sich eingeloggt haben um mit diesem Skript arbeiten zu können.");
 		return null;
 	}
 }
@@ -36,20 +36,19 @@ CSV.prototype =
 			this.searchindex = searchindex;
 			this.withbib = withbib;
 			this.logFilename = logFilename;
-				
-		},		
+		},
 		
 	__csvSetCallback:
 		function(callback)
 		{
 			this.callback = callback;
-		},		
+		},
 		
 	__csvSetLogFilename:
 		function(logFilename)
 		{
 			this.logFilename = logFilename;
-		},		
+		},
 		
 	__csvSetEigeneBibliothek:
 		function(eigene_bibliothek)
@@ -62,7 +61,7 @@ CSV.prototype =
 		function()
 		{
 			const params = Components.classes["@mozilla.org/embedcomp/dialogparam;1"]
-							.createInstance(Components.interfaces.nsIDialogParamBlock);
+							.createInstance(Components.interfaces.nsIDialogParamBlock);		
 			params.SetNumberStrings(999);
 
 			params.SetString(1,this.callback);
@@ -87,14 +86,22 @@ CSV.prototype =
 
 			
 			this.params			= params;
+			this.constants		= params.GetString(992);
 			this.text			= params.GetString(993);
 			this.isil 			= params.GetString(994);
 			this.code			= params.GetString(995);
 			this.startLine 		= params.GetString(996);
 			this.csvFilename 	= params.GetString(997);
 			this.delimiter		= params.GetString(998);
-			
 			params = null;
+			
+			//__zeigeEigenschaften(params);
+			
+			eval("var const = new Array(this.constants)");
+			this.__csvError(typeof this.constants);
+			/*for(var c = 1;c <= this.constants.length; c++){
+				eval("this.const_"+c) = this.constants[c];
+			}*/
 			return;
 		},
 
@@ -105,13 +112,13 @@ CSV.prototype =
 			//define eigene bibliothek
 			this.eigene_bibliothek = this.__csvBatchBibIdn();
 			if(this.eigene_bibliothek == false){
-				this.__csvLOG(this.isil + "\tDer Bibliothekssatz fÃ¼r das Produktsigel konnte nicht gefunden werden.");
-				throw "Das Skript wird abgebrochen. Der Bibliothekssatz fÃ¼r das Produktsigel konnte nicht gefunden werden.";
+				this.__csvLOG(this.isil + "\tDer Bibliothekssatz für das Produktsigel konnte nicht gefunden werden.");
+				throw "Das Skript wird abgebrochen. Der Bibliothekssatz für das Produktsigel konnte nicht gefunden werden.";
 				return false;
 			} else {
 				this.eigene_bibliothek = "!" + this.eigene_bibliothek + "!";
 				return true;
-			}		
+			}
 		},
 		
 	 __csvBatch:
@@ -154,6 +161,75 @@ CSV.prototype =
 					// for better acces write a simple array
 					for(var y = 0;y < this.keys.length; y++) 
 						this.line[this.keys[y]] = this.lineArray[[this.config[this.keys[y]]]];
+
+					application.activeWindow.setVariable("P3GPP","");
+					
+					// search for zdb-id
+					application.activeWindow.command("f " + this.searchindex + " " + this.line[this.id_key],false);
+					
+					idn = application.activeWindow.getVariable("P3GPP");
+
+					if(idn != "")
+					{ 
+						this.callback();
+					}
+					else
+					{
+						this.__csvLOG(this.line[this.id_key] + "\tTitel konnte nicht gefunden werden.");
+					}
+						
+				} 
+				else
+				{
+					// do nothing
+				}
+				i++;
+			}
+			csv.close();
+			
+			return;
+		},
+		
+	 __csvAPI:
+		function()
+		{	
+			// on cancel
+			if(this.csvFilename == false) return;
+			
+			if(this.withbib == true) {
+				if(!this.__csvEigeneBibliothek()) return;
+			}
+
+			// first selct the file you want to work with
+			// open the input file
+			var csv = utility.newFileInput();
+			
+			if(!csv.openSpecial("ProfD", "\csv\\" + this.csvFilename)){
+				throw "Datei " + this.csvFilename + " wurde nicht gefunden.";
+				throw "Das Skript wird abgebrochen. Datei " + this.csvFilename + " wurde nicht gefunden.";
+				return false;
+			}
+
+			// read the start line
+			var aLine, idn;
+			var theStart = parseInt(this.startLine);
+			
+			
+			// for each line of the csv file
+			var i = 1;
+
+			while((aLine = csv.readLine()) != null)
+			{
+				// when aLine is empty memory error occours
+				if(i >= theStart && aLine != "")
+				{
+					// call CSVToArray() function
+					this.lineArray 	= this.__csvToArray(aLine);
+					
+					this.line = new Array();
+					// for better acces write a simple array
+					for(var y = 0;y < this.keys.length; y++) 
+						this.line[this.keys[y]] = this.lineArray[y];
 
 					application.activeWindow.setVariable("P3GPP","");
 					
@@ -252,7 +328,7 @@ CSV.prototype =
 			if(idn != ""){
 				return application.activeWindow.getVariable("P3GPP");
 			} else {
-					return false;
+				return false;
 			}
 		},	
 		

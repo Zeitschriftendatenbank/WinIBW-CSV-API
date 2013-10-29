@@ -173,123 +173,132 @@ Müssen diese Methoden als Prototypen definiert sein?
 
 ## Benutzung
 Anhand eines Beispiels soll die Benutzung der Klasse veranschaulicht werden.
-
-				// erstelle eine neue Function
-				function csvBatchIstWertVorhanden()
-				{
-					// initiiere das CSV-Objekt
-					// alle Eigenschaften und Methoden des Objekts wurden nun auf die Variable csv vererbt
-					var csv = new CSV();
-					
-					// erweitere nun die Klasse CSV durch deine eigene Methode
-					csv.meineMethode = function()
-						{
-							// mach etwas mit dem Datensatz	
-						}
-					
-					// setze deine eigenen Eigenschaften
-					// der erste Parameter ist die Callback Funktion, die Du zuvor erstellt hast
-					csv.__csvSetProperties(csv.meineMethode,["","ZDB-ID","Suchstring"],'ZDB-ID','zdb',false,"ZDB_LOG.txt");
-					
-					// initiiere das Konfigurations-Interface
-					// fange dabei eventuelle Fehler ab
-					try
-					{
-						csv.__csvConfig();
-					
-						// initiiere die Batchbearbeitung
-						csv.__csvBatch();
-					} 
-					catch(e)
-					{
-						csv.__csvError(e);
-					}
-					
-				}
+```javascript
+// erstelle eine neue Function
+function csvBatchIstWertVorhanden()
+{
+	// initiiere das CSV-Objekt
+	// alle Eigenschaften und Methoden des Objekts wurden nun auf die Variable csv vererbt
+	var csv = new CSV();
+	
+	// erweitere nun die Klasse CSV durch deine eigene Methode
+	csv.meineMethode = function()
+		{
+			// mach etwas mit dem Datensatz	
+		}
+	
+	// setze deine eigenen Eigenschaften
+	// der erste Parameter ist die Callback Funktion, die Du zuvor erstellt hast
+	csv.__csvSetProperties(csv.meineMethode,["","ZDB-ID","Suchstring"],'ZDB-ID','zdb',false,"ZDB_LOG.txt");
+	
+	// initiiere das Konfigurations-Interface
+	// fange dabei eventuelle Fehler ab
+	try
+	{
+		csv.__csvConfig();
+	
+		// initiiere die Batchbearbeitung
+		csv.__csvBatch();
+	} 
+	catch(e)
+	{
+		csv.__csvError(e);
+	}
+	
+}
+```
 
 Wie kann nun auf die Eigenschaften und Methoden zugegriffen werden?
 
 Beispiel für die Methoden __csvLOG und __csvError
 
-				// versuche in den Korrekturmodus eines Datensatzes zu gelangen
-				try
-				{
-					application.activeWindow.command("k", false);
-				} 
-				catch(e) 
-				{
-					// die Variable csv hat alle Methoden der Klasse geerbt
-					// daher kann über csv.__csvLOG und csv.__csvError auf die Methodev __csvLOG und __csvError zugegriffen werden
-					csv.__csvLOG("Datensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
-					csv.__csvError("Datensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
-					return;
-				}
+```javascript
+// versuche in den Korrekturmodus eines Datensatzes zu gelangen
+try
+{
+	application.activeWindow.command("k", false);
+} 
+catch(e) 
+{
+	// die Variable csv hat alle Methoden der Klasse geerbt
+	// daher kann über csv.__csvLOG und csv.__csvError auf die Methodev __csvLOG und __csvError zugegriffen werden
+	csv.__csvLOG("Datensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
+	csv.__csvError("Datensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
+	return;
+}
+```
 
 Beispiel für den Zugriff auf Eigenschaften
-					
-					// zunächst möchtest Du noch eine weitere Methode erstellen, die eine Extra-Aufgabe erledigt
-					csv.extraMethode = function(wert)
-					{
-						// z.B suche nach wert und gib tue bei Erfolg zurück, ansonsten gib false zurück
-						if(application.activeWindow.title.find(wert,false,false,true))
-						{
-							return application.activeWindow.title.currentLineNumber;
-						}
-						else
-						{
-							return false;
-						{	
-					}
-					
-					// Diese Methode möchtest Du mit einem Wert einer Klasseneingenschaft bestücken
-					// dazu kannst Du z.B. auf csv.line zugreifen und eine CSV-Spalte wählen
-					// 'Suchstring' wurde im Konfigurations-Interface zuvor mit einer CSV-Spalte verknüpft
-					var gefunden = csv.extraMethode(csv.line['Suchstring']);
+
+```javascript
+// zunächst möchtest Du noch eine weitere Methode erstellen, die eine Extra-Aufgabe erledigt
+csv.extraMethode = function(wert)
+{
+	// z.B suche nach wert und gib tue bei Erfolg zurück, ansonsten gib false zurück
+	if(application.activeWindow.title.find(wert,false,false,true))
+	{
+		return application.activeWindow.title.currentLineNumber;
+	}
+	else
+	{
+		return false;
+	{	
+}
+
+// Diese Methode möchtest Du mit einem Wert einer Klasseneingenschaft bestücken
+// dazu kannst Du z.B. auf csv.line zugreifen und eine CSV-Spalte wählen
+// 'Suchstring' wurde im Konfigurations-Interface zuvor mit einer CSV-Spalte verknüpft
+var gefunden = csv.extraMethode(csv.line['Suchstring']);
+```
 
 Beispiel für den Zugriff auf die Methode __csvSaveBuffer
 
-					// Wenn ein Wert gefunden wurde soll der Datensatz gespeichert werden
-					// wenn nicht soll der Datensatz verlassen werden
-					if(!gefunden)
-					{
-						csv.__csvSaveBuffer(false,"String " + csv.line['Suchstring'] + " kann nicht gefunden werden.\n");
-						return;
-					}
+```javascript
+// Wenn ein Wert gefunden wurde soll der Datensatz gespeichert werden
+// wenn nicht soll der Datensatz verlassen werden
+if(!gefunden)
+{
+	csv.__csvSaveBuffer(false,"String " + csv.line['Suchstring'] + " kann nicht gefunden werden.\n");
+	return;
+}
 
-					csv.__csvSaveBuffer(true,"String " + csv.line['Suchstring'] + " wurde gefunden.\n");
+csv.__csvSaveBuffer(true,"String " + csv.line['Suchstring'] + " wurde gefunden.\n");
+```
 
 Beispiel zur Verwendung der Klasse ohne CSV-Dateien:
 
-				function setBearbeiten()
-				{
-					// initiiere die Klasse
-					var csv = new CSV();
-					// setzte den Dateinamen des Logfiles
-					csv.__csvSetLogFilename("loeschen_LOG.txt");
-					// setzte die IDN/PPN der eigenen Bibliothek
-					csv.__csvSetEigeneBibliothek("020593228");
-					// hole Umfang des Sets
-					var setSize = application.activeWindow.getVariable("P3GSZ");
-					i = 1;
-					do 
-					{
-						// mach etwas mit dem Set ...
-						try
-						{
-							application.activeWindow.command("k " + i,false);
-							var idn = application.activeWindow.getVariable("P3GPP");
-						}
-						catch(e) 
-						{
-							// schreib etwas in die Log-Datei ...
-							csv.__csvLOG(idn + "\tDatensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
-							return;
-						}
-						application.activeWindow.title.endOfBuffer();
-						var neuesFeld = "\n6000 Test";
-						application.activeWindow.title.insertText(neuesFeld);
-						// starte Speicherroutine
-						csv.__csvSaveBuffer(true,idn + "\t" + neuesFeld);
-						i++;
-					} while (i <= setSize)
-				}
+```javascript
+function setBearbeiten()
+{
+	// initiiere die Klasse
+	var csv = new CSV();
+	// setzte den Dateinamen des Logfiles
+	csv.__csvSetLogFilename("loeschen_LOG.txt");
+	// setzte die IDN/PPN der eigenen Bibliothek
+	csv.__csvSetEigeneBibliothek("020593228");
+	// hole Umfang des Sets
+	var setSize = application.activeWindow.getVariable("P3GSZ");
+	i = 1;
+	do 
+	{
+		// mach etwas mit dem Set ...
+		try
+		{
+			application.activeWindow.command("k " + i,false);
+			var idn = application.activeWindow.getVariable("P3GPP");
+		}
+		catch(e) 
+		{
+			// schreib etwas in die Log-Datei ...
+			csv.__csvLOG(idn + "\tDatensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
+			return;
+		}
+		application.activeWindow.title.endOfBuffer();
+		var neuesFeld = "\n6000 Test";
+		application.activeWindow.title.insertText(neuesFeld);
+		// starte Speicherroutine
+		csv.__csvSaveBuffer(true,idn + "\t" + neuesFeld);
+		i++;
+	} while (i <= setSize)
+}
+```

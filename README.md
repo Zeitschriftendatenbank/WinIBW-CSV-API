@@ -239,7 +239,7 @@ function csvBatchIstWertVorhanden()
 		else
 		{
 			return false;
-		{	
+		}	
 	}
 	
 	// setze deine eigenen Eigenschaften
@@ -251,7 +251,7 @@ function csvBatchIstWertVorhanden()
 	try
 	{
 		// initiiere die Batchbearbeitung
-		csv.__API();
+		csv.__csvAPI();
 	} 
 	catch(e)
 	{
@@ -295,7 +295,7 @@ csv.extraMethode = function(wert)
 	else
 	{
 		return false;
-	{	
+	}	
 }
 
 // Diese Methode möchtest Du mit einem Wert einer Klasseneingenschaft bestücken

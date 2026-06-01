@@ -39,6 +39,12 @@ Ist der Suchindex, der im Zusammenhang mit id_key verwendet wird. Repräsentiert
 
 Default Wert: "zdb"
 
+### filepath
+Typ String
+Der relative Pfad (ausgehend von ProfD) unter dem die zu importierenden CSV-Dateien liegen. Default Wert ist hier "import". Unter den User-Einstellungen (user_Pref.txt) kan dieser Wert geändert werden. Z.B.:
+
+csv.filepath = meine_import_dateien
+
 ### logFilename
 Typ String
 
@@ -59,7 +65,7 @@ CSV
 Stellt alle (default-)Eigenschaften und Methoden der Klasse bereit.
 
 ## Methoden der Klasse CSV
-### csvSetProperties
+### setProperties
 Setzt die Eigenschaften der Klasse
 
 #### Parameter: 
@@ -70,34 +76,20 @@ Setzt die Eigenschaften der Klasse
 *    _PPN_	  eigene_bibliothek
 *    _String_ logFilename
 
-### csvConfig
-Initiert den Aufruf des Konfigurations-Interface
-
-#### Stellt folgende Eigenschaften bereit:
-
-*    _Object_ params			: Objekt mit allen Eigenschaften
-*    _String_ text			: Freitext aus dem Konfigurations-Interface
-*    _String_ isil			: ISIL aus dem Konfigurations-Interface
-*    _String_ code			: Dropdown-Code aus dem Konfigurations-Interface
-*    _String_ startLine			: CSV-Zeile, ab der die Bearbeitung starten soll 
-*    _String_ endLine			: CSV-Zeile, ab der die Bearbeitung enden soll 
-*    _String_ csvFilename		: Name der CSV-Datei	
-*    _String_ delimiter			: Trennzeichen in der CSV-Datei
-
-### csvAPI
-Initiiert die Batchverarbeitung der CSV-Datei ohne vorherige Konfiguration. Die keys, die mit der methode csvSetProperties definiert werden, müssen mit den Spalten der CSV-Datei übereinstimmen. Siehe Beispiel
+### api
+Initiiert die Batchverarbeitung der CSV-Datei ohne vorherige Konfiguration. Die keys, die mit der methode setProperties definiert werden, müssen mit den Spalten der CSV-Datei übereinstimmen. Siehe Beispiel
 
 #### Stellt folgende Eigenschaften bereit:
 
 *    _Array_ line			: Array mit allen Werten einer CSV-Zeile
 
-### csvLOG
+### log
 Erlaubt das Speichern von Log-Einträgen während der Bearbeitung.
 
 #### Parameter:
 _String_ message
 
-### csvSaveBuffer
+### save
 Stellt eine Speicherroutine bereit.
 
 #### Parameter:
@@ -121,10 +113,13 @@ function csvBatchIstWertVorhanden()
 {
 	// initiiere das CSV-Objekt
 	var csv = new CSV();
-	// diese csv muss im Unterverzeichnis 'csv' des Anwendungsprofils liegen.
+	application.activeWindow.writeProfileString('csv', 'filepath', 'import');
+	// diese csv muss im Unterverzeichnis 'import' des Anwendungsprofils liegen.
 	csv.csvFilename = "test.csv";
 	// start ab Zeile
 	csv.startLine = 1;
+	// ende Zeile 10
+	csv.endLine = 10;
 	// werte getrennt mit
 	csv.delimiter = ";";
 	// erweitere nun die Klasse CSV durch deine eigene Methode
@@ -144,16 +139,40 @@ function csvBatchIstWertVorhanden()
 	
 	// setze deine eigenen Eigenschaften
 	// der erste Parameter ist die Callback Funktion, die Du zuvor erstellt hast
-	csv.csvSetProperties(csv.meineMethode,["","ZDB-ID","Suchstring"],'ZDB-ID','zdb',false,"ZDB_LOG.txt");
+	csv.setProperties(csv.meineMethode,["","ZDB-ID","Suchstring"],'ZDB-ID','zdb',false,"ZDB_LOG.txt");
 	
 	// initiiere die Batchbearbeitung
-	csv.csvAPI();
+	csv.api();
+}
+```
+
+### getAllLines
+Gibt den gesamten Inhalt der aktuell gesetzten CSV-Datei als Array von Objekt-Zeilen zurück. Jede Zeile wird anhand der `keys`-Konfiguration in ein Objekt gemappt (Schlüssel → Spaltenwert).
+
+Rückgabe:
+
+* _Array_ von Objekten, z.B. `[ {"ZDB-ID":"123","Suchstring":"abc"}, ... ]`
+
+Beispiel:
+
+```javascript
+function __openUsers() {
+    // initiiere das CSV-Objekt
+	var csv = new CSV();
+	application.activeWindow.writeProfileString('csv', 'filepath', 'user');
+	// diese tsv muss im Unterverzeichnis 'user' des Anwendungsprofils liegen.
+	csv.csvFilename = "users.tsv";
+	csv.startLine = 2;
+	csv.endLine = 0;
+	// werte getrennt mit
+	csv.delimiter = "\t";
+	Users = csv.getAllLines();
 }
 ```
 
 Wie kann nun auf die Eigenschaften und Methoden zugegriffen werden?
 
-Beispiel für die Methoden csvLOG
+Beispiel für die Methoden csv.log
 
 ```javascript
 // versuche in den Korrekturmodus eines Datensatzes zu gelangen
@@ -164,8 +183,8 @@ try
 catch(e) 
 {
 	// die Variable csv hat alle Methoden der Klasse geerbt
-	// daher kann über csv.csvLOG auf die Methodev csvLOG zugegriffen werden
-	csv.csvLOG("Datensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
+	// daher kann über csv.log auf die Methodev log zugegriffen werden
+	csv.log("Datensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
 	return;
 }
 ```
@@ -193,18 +212,18 @@ csv.extraMethode = function(wert)
 var gefunden = csv.extraMethode(csv.line['Suchstring']);
 ```
 
-Beispiel für den Zugriff auf die Methode csvSaveBuffer
+Beispiel für den Zugriff auf die Methode csv.save
 
 ```javascript
 // Wenn ein Wert gefunden wurde soll der Datensatz gespeichert werden
 // wenn nicht soll der Datensatz verlassen werden
 if(!gefunden)
 {
-	csv.csvSaveBuffer(false,"String " + csv.line['Suchstring'] + " kann nicht gefunden werden.\n");
+	csv.save(false,"String " + csv.line['Suchstring'] + " kann nicht gefunden werden.\n");
 	return;
 }
 
-csv.csvSaveBuffer(true,"String " + csv.line['Suchstring'] + " wurde gefunden.\n");
+csv.save(true,"String " + csv.line['Suchstring'] + " wurde gefunden.\n");
 ```
 
 Beispiel zur Verwendung der Klasse ohne CSV-Dateien:
@@ -215,9 +234,9 @@ function setBearbeiten()
 	// initiiere die Klasse
 	var csv = new CSV();
 	// setzte den Dateinamen des Logfiles
-	csv.csvSetLogFilename("loeschen_LOG.txt");
+	csv.logFilename = "loeschen_LOG.txt";
 	// setzte die IDN/PPN der eigenen Bibliothek
-	csv.csvSetEigeneBibliothek("020593228");
+	csv.setEigeneBibliothek("020593228");
 	// hole Umfang des Sets
 	var setSize = application.activeWindow.getVariable("P3GSZ");
 	i = 1;
@@ -232,14 +251,14 @@ function setBearbeiten()
 		catch(e) 
 		{
 			// schreib etwas in die Log-Datei ...
-			csv.csvLOG(idn + "\tDatensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
+			csv.log(idn + "\tDatensatz kann nicht geoeffnet werden.\nFehlermeldung: " + e);
 			return;
 		}
 		application.activeWindow.title.endOfBuffer();
 		var neuesFeld = "\n6000 Test";
 		application.activeWindow.title.insertText(neuesFeld);
 		// starte Speicherroutine
-		csv.csvSaveBuffer(true,idn + "\t" + neuesFeld);
+		csv.save(true,idn + "\t" + neuesFeld);
 		i++;
 	} while (i <= setSize)
 }

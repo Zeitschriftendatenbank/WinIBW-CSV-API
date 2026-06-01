@@ -8,11 +8,9 @@
 // Constants
 var CSV_CONFIG = {
     DEFAULT_LOG_FILENAME: "LOG_default.txt",
-    CSV_PATH: "\csv\\",
+    CSV_PATH: "csv",
     DEFAULT_DELIMITER: ";",
     VALID_USER_ROLES: "#7A#8A#FI#",
-    REQUIRED_ROLE_FOR_SAVE: "8A",
-    SEARCH_PARAM_VAR: "P3GPP",
     LOG_FOLDER: "listen"
 };
 
@@ -24,14 +22,13 @@ function CSV() {
     this.logFilename = CSV_CONFIG.DEFAULT_LOG_FILENAME;
     this.eigene_bibliothek = "";
     this.csv = utility.newFileInput();
-    this.path = CSV_CONFIG.CSV_PATH;
+    this.filepath = '\\' + getProfileString('csv', 'filepath', CSV_CONFIG.CSV_PATH) + '\\';
     this.isOpen = false;
     this.csvFilename = false;
     this.logger = null;
     this.delimiter = CSV_CONFIG.DEFAULT_DELIMITER;
     this.startLine = 0;
     this.endLine = 0;
-    this.validateUserLogin();
 }
 
 
@@ -41,20 +38,20 @@ CSV.prototype =
     validateUserLogin: function () {
         var userRole = activeWindow.getVariable("scr");
         if (userRole === "" || CSV_CONFIG.VALID_USER_ROLES.indexOf(userRole) < 0) {
-            throw "Sie müssen sich eingeloggt haben um mit diesem Skript arbeiten zu können.";
+            throw "CSV [1]: Sie mÃ¼ssen sich eingeloggt haben um mit diesem Skript arbeiten zu kÃ¶nnen.";
         }
     },
-    openCsv: function () {
+    __openCsv: function () {
         if (this.csvFilename === this.isOpen) {
-            messageBox("Die Datei " + this.csvFilename + " ist bereits geöffnet.");
+            //messageBox("Die Datei " + this.csvFilename + " ist bereits geÃ¶ffnet.");
             this.csv.close();
         }
-        if (!this.csv.openSpecial("ProfD", this.path + this.csvFilename)) {
-            throw "Datei " + this.csvFilename + " wurde nicht gefunden.";
+        if (!this.csv.openSpecial("ProfD", this.filepath + this.csvFilename)) {
+            throw "CSV [2]: Datei " + this.filepath + this.csvFilename + " wurde nicht gefunden.";
         }
         this.isOpen = this.csvFilename;
     },
-    csvSetProperties:
+    setProperties:
         function (callback, keys, id_key, searchindex, eigene_bibliothek, logFilename) {
             this.callback = callback;
             this.keys = keys;
@@ -63,18 +60,18 @@ CSV.prototype =
             this.eigene_bibliothek = eigene_bibliothek;
             this.logFilename = logFilename;
         },
-    csvSetEigeneBibliothek:
+    setEigeneBibliothek:
         function (eigene_bibliothek) {
             this.eigene_bibliothek = "!" + eigene_bibliothek + "!";
         },
-    csvGetHeader:
+    getHeader:
         function () {
-            this.openCsv();
+            this.__openCsv();
             this.header = this.csvToArray(this.csv.readLine());
             return this.header;
         },
     // Converts a raw CSV line string into a keyed object using this.keys.
-    csvLineToObj: function (aLine) {
+    __lineToObj: function (aLine) {
         var lineArray = this.csvToArray(aLine);
         var lineObj = {};
         for (var y = 0; y < this.keys.length; y++) {
@@ -83,48 +80,76 @@ CSV.prototype =
         return lineObj;
     },
     // Looks up the record in CBS and dispatches the callback, or logs a failure.
-    csvLookupAndDispatch: function () {
+    __lookupAndDispatch: function () {
+        this.validateUserLogin();
         var idn, cbsMessage;
-        activeWindow.setVariable(CSV_CONFIG.SEARCH_PARAM_VAR, "");
+        activeWindow.setVariable("P3GPP", "");
+        //alert("\\zoe " + this.searchindex + " " + this.line[this.id_key]);
         activeWindow.command("\\zoe " + this.searchindex + " " + this.line[this.id_key], false);
-        idn = activeWindow.getVariable(CSV_CONFIG.SEARCH_PARAM_VAR);
-        cbsMessage = this.csvGetMessages();
+        idn = activeWindow.getVariable("P3GPP");
+        //alert("Lookup result: " + idn);
+        cbsMessage = this.__getMessages();
         if (idn === "" || cbsMessage) {
-            this.csvLOG("\\zoe " + this.searchindex + " " + this.line[this.id_key] + " " + cbsMessage + ";" + activeWindow.status);
+            this.log("\\zoe " + this.searchindex + " " + this.line[this.id_key] + " " + cbsMessage + ";" + activeWindow.status);
         } else {
             this.callback();
         }
     },
     // Processes a single CSV line: builds the line object, dispatches callback or lookup.
-    csvProcessLine: function (aLine) {
-        this.line = this.csvLineToObj(aLine);
+    __processLine: function (aLine) {
+        this.line = this.__lineToObj(aLine);
         if (!this.searchindex) {
             this.callback();
         } else {
-            this.csvLookupAndDispatch();
+            this.__lookupAndDispatch();
         }
         delete this.line;
     },
-    csvAPI: function () {
+    api: function () {
         if (this.csvFilename === false) return;
-        this.openCsv();
+        this.__openCsv();
         var aLine;
         var theStart = parseInt(this.startLine);
+        var theEnd = parseInt(this.endLine);
+        //alert("CSV-Datei " + this.csvFilename + " wird verarbeitet. Startzeile: " + theStart + ", Endzeile: " + (theEnd > 0 ? theEnd : "EOF") + ".");
         var row = 0;
 
         while (!this.csv.isEOF()) {
             aLine = this.csv.readLine();
             row += 1;
-            if (this.endLine > 0 && row > parseInt(this.endLine)) {
+            if (theEnd > 0 && row > theEnd) {
                 break;
             }
             if (row >= theStart && aLine !== "") {
-                this.csvProcessLine(aLine);
+                this.__processLine(aLine);
             }
         }
         this.csv.close();
     },
-    csvLOG: function (message) {
+    // Returns the whole CSV file as an array of line-objects
+    getAllLines: function () {
+        if (this.csvFilename === false) return [];
+        this.__openCsv();
+        var result = [];
+        var aLine;
+        var row = 0;
+        var theStart = parseInt(this.startLine);
+        var theEnd = parseInt(this.endLine);
+
+        while (!this.csv.isEOF()) {
+            aLine = this.csv.readLine();
+            row += 1;
+            if (theEnd > 0 && row > theEnd) {
+                break;
+            }
+            if (row >= theStart && aLine !== "") {
+                result.push(this.__lineToObj(aLine));
+            }
+        }
+        this.csv.close();
+        return result;
+    },
+    log: function (message) {
         if (this.logger === null) {
             this.logger = new LOGGER();
             this.logger.setLogFile(this.logFilename, CSV_CONFIG.LOG_FOLDER);
@@ -133,33 +158,28 @@ CSV.prototype =
         var dateString = d.getDate() + "-" + (d.getMonth() + 1) + "-" + d.getFullYear().toString().substr(-2) + " " + d.getHours() + ":" + d.getMinutes() + ":";
         var seconds = d.getSeconds();
         seconds = seconds <= 9 ? "0" + seconds : seconds;
-        this.logger.log(dateString + seconds + ";" + activeWindow.getVariable(CSV_CONFIG.SEARCH_PARAM_VAR) + ";" + this.line[this.id_key] + ";" + message);
+        this.logger.log(dateString + seconds + ";" + activeWindow.getVariable("P3GPP") + ";" + this.line[this.id_key] + ";" + message);
     },
-    csvSaveBuffer: function (save, message) {
+    save: function (save, message) {
         message = "\"" + message + "\"";
         var cbsMessage;
-        if (activeWindow.status !== "OK" || save !== true) {
-            var logMsg = save === false
-                ? "Datensatz wurde verlassen und nicht gespeichert;"
-                : "Datensatz kann nicht gespeichert werden;";
-            this.csvLOG(logMsg + activeWindow.status + ";" + message);
-            activeWindow.simulateIBWKey("FE");
-            return false;
+        if (save === true) {
+            activeWindow.simulateIBWKey("FR");
+            cbsMessage = this.__getMessages();
+            if (cbsMessage) message = message + ";" + cbsMessage;
+            if(activeWindow.status !== "OK") {
+                this.log("Datensatz konnte nicht gespeichert werden;" + activeWindow.status + ";" + message);
+                activeWindow.simulateIBWKey("FE");
+                return false;
+            }
+            this.log("Datensatz wurde gespeichert;" + activeWindow.status + ";" + message);
+            return true;
         }
-        activeWindow.simulateIBWKey("FR");
-        cbsMessage = this.csvGetMessages();
-        if (cbsMessage) {
-            message = message + ";" + cbsMessage;
-        }
-        if (activeWindow.getVariable("scr") !== CSV_CONFIG.REQUIRED_ROLE_FOR_SAVE) {
-            this.csvLOG("Datensatz kann nicht gespeichert werden;" + activeWindow.status + ";" + message);
-            activeWindow.simulateIBWKey("FE");
-            return false;
-        }
-        this.csvLOG("Datensatz wurde gespeichert;" + activeWindow.status + ";" + message);
+        activeWindow.simulateIBWKey("FE");
+        this.log("Datensatz wurde verlassen und nicht gespeichert;" + activeWindow.status + ";" + message);
         return true;
     },
-    csvGetMessages: function () {
+    __getMessages: function () {
         var msgs = utility.messages();
         if (msgs.count === 0) {
             return false;

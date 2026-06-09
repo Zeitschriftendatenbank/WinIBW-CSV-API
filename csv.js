@@ -21,8 +21,8 @@ function CSV() {
     this.searchindex = false;
     this.logFilename = CSV_CONFIG.DEFAULT_LOG_FILENAME;
     this.eigene_bibliothek = "";
+    this.filepath = getProfileString('csv', 'filepath', CSV_CONFIG.CSV_PATH);
     this.csv = utility.newFileInput();
-    this.filepath = '\\' + getProfileString('csv', 'filepath', CSV_CONFIG.CSV_PATH) + '\\';
     this.isOpen = false;
     this.csvFilename = false;
     this.logger = null;
@@ -46,10 +46,21 @@ CSV.prototype =
             //messageBox("Die Datei " + this.csvFilename + " ist bereits geöffnet.");
             this.csv.close();
         }
-        if (!this.csv.openSpecial("ProfD", this.filepath + this.csvFilename)) {
-            throw "CSV [2]: Datei " + this.filepath + this.csvFilename + " wurde nicht gefunden.";
+
+        if ('\\' === this.filepath.charAt(0)) {
+            alert('relative');
+            if (!this.csv.openSpecial("ProfD", this.filepath + '\\' + this.csvFilename)) {
+                throw "CSV [2]: Datei " + this.filepath + '\\' + this.csvFilename + " wurde nicht gefunden.";
+            }
+        } else {
+            alert("Pfad: " + this.filepath + '\\' + this.csvFilename);
+            if (!this.csv.open(this.filepath + '\\' + this.csvFilename)) {
+                alert("Nicht gefunden: " + this.filepath + '\\' + this.csvFilename);
+                throw "CSV [2]: Datei " + this.filepath + '\\' + this.csvFilename + " wurde nicht gefunden.";
+            }
+
+            this.isOpen = this.csvFilename;
         }
-        this.isOpen = this.csvFilename;
     },
     setProperties:
         function (callback, keys, id_key, searchindex, eigene_bibliothek, logFilename) {
@@ -167,7 +178,7 @@ CSV.prototype =
             activeWindow.simulateIBWKey("FR");
             cbsMessage = this.__getMessages();
             if (cbsMessage) message = message + ";" + cbsMessage;
-            if(activeWindow.status !== "OK") {
+            if (activeWindow.status !== "OK") {
                 this.log("Datensatz konnte nicht gespeichert werden;" + activeWindow.status + ";" + message);
                 activeWindow.simulateIBWKey("FE");
                 return false;

@@ -53,7 +53,6 @@ CSV.prototype =
                 throw "CSV [2]: Datei " + this.filepath + '\\' + this.csvFilename + " wurde nicht gefunden.";
             }
         } else {
-            alert("Pfad: " + this.filepath + '\\' + this.csvFilename);
             if (!this.csv.open(this.filepath + '\\' + this.csvFilename)) {
                 alert("Nicht gefunden: " + this.filepath + '\\' + this.csvFilename);
                 throw "CSV [2]: Datei " + this.filepath + '\\' + this.csvFilename + " wurde nicht gefunden.";

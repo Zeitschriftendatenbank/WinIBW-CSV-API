@@ -8,11 +8,11 @@
 // Constants
 var CSV_CONFIG = {
     DEFAULT_LOG_FILENAME: "LOG_default.txt",
-    CSV_PATH: "csv",
+    CSV_PATH: "\\import",
     DEFAULT_DELIMITER: ";",
-    VALID_USER_ROLES: "#7A#8A#FI#",
     LOG_FOLDER: "listen"
 };
+var MISC;
 
 function CSV() {
     this.callback = function () { };
@@ -35,12 +35,6 @@ function CSV() {
 
 CSV.prototype =
 {
-    validateUserLogin: function () {
-        var userRole = activeWindow.getVariable("scr");
-        if (userRole === "" || CSV_CONFIG.VALID_USER_ROLES.indexOf(userRole) < 0) {
-            throw "CSV [1]: Sie müssen sich eingeloggt haben um mit diesem Skript arbeiten zu können.";
-        }
-    },
     __openCsv: function () {
         if (this.csvFilename === this.isOpen) {
             //messageBox("Die Datei " + this.csvFilename + " ist bereits geöffnet.");
@@ -48,7 +42,6 @@ CSV.prototype =
         }
 
         if ('\\' === this.filepath.charAt(0)) {
-            alert('relative');
             if (!this.csv.openSpecial("ProfD", this.filepath + '\\' + this.csvFilename)) {
                 throw "CSV [2]: Datei " + this.filepath + '\\' + this.csvFilename + " wurde nicht gefunden.";
             }
@@ -91,11 +84,11 @@ CSV.prototype =
     },
     // Looks up the record in CBS and dispatches the callback, or logs a failure.
     __lookupAndDispatch: function () {
-        this.validateUserLogin();
         var idn, cbsMessage;
         activeWindow.setVariable("P3GPP", "");
         //alert("\\zoe " + this.searchindex + " " + this.line[this.id_key]);
-        activeWindow.command("\\zoe " + this.searchindex + " " + this.line[this.id_key], false);
+        //activeWindow.command("\\zoe " + this.searchindex + " " + this.line[this.id_key], false);
+        MISC.wait("\\ZOE " + this.searchindex + " " + this.line[this.id_key], false);
         idn = activeWindow.getVariable("P3GPP");
         //alert("Lookup result: " + idn);
         cbsMessage = this.__getMessages();
